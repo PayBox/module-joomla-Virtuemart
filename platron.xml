@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<install version="1.5" type="plugin" group="vmpayment" >
+    <name>VM - Payment, Platron</name>
+    <creationDate>Mar 2013</creationDate>
+    <author>Lashnev Alexey</author>
+    <authorUrl>http://hh.ru/resume/453b4e87ff00d65a230039ed1f773455363048</authorUrl>
+    <copyright></copyright>
+    <license></license>
+    <version>2.0.6</version>
+    <description><![CDATA[Платрон - универсальная система приема платежей на сайте. Система жлектронных платежей для интернет магазинов]]></description>
+    <languages>
+	<language tag="en-GB">en-GB.plg_vmpayment_platron.ini</language>
+	<language tag="ru-RU">ru-RU.plg_vmpayment_platron.ini</language>
+    </languages>
+    <files>
+	<filename plugin="platron">platron.php</filename>
+	<filename>index.html</filename>
+	<filename>paybox.gif</filename>
+	<filename>PG_Signature.php</filename>
+    </files>
+    <params addpath="/administrator/components/com_virtuemart/elements">
+	<param type="vmjpluginwarning" />
+	<param	name="payment_logos" type="vmfiles" label="VMPAYMENT_STANDARD_LOGOS" description="VMPAYMENT_STANDARD_LOGOS_DESC"	directory="/plugins/vmpayment/platron" default="paybox.gif" hide_default="1" hide_none="1" stripext="0"   exclude=".*\.(php|html|xml|wsdl)" />
+	<param name="testing_mode" type="radio" default="TEST" label="VMPAYMENT_PLATRON_TESTING_MODE" description="VMPAYMENT_PLATRON_TESTING_MODE_DESC">
+	    <option value="TEST">VMPAYMENT_PLATRON_TEST</option>
+	    <option value="PRODUCTION">VMPAYMENT_PLATRON_PRODUCTION</option>
+	</param>
+	<param type="text" name="platron_id"  size="50" label="VMPAYMENT_PLATRON_ID" default="" description="VMPAYMENT_PLATRON_ID_DESC" />
+    <param type="text" name="platron_secret"  size="50" label="VMPAYMENT_PLATRON_SECRET" default="" description="VMPAYMENT_PLATRON_SECRET_DESC" />
+	<param type="text" name="platron_life_time"  size="50" label="VMPAYMENT_PLATRON_LIFE_TIME" default="24" description="VMPAYMENT_PLATRON_LIFE_TIME_DESC" />
+	<param name="status_pending" type="vmorderstate" scope="com_virtuemart" default="P" label="VMPAYMENT_PLATRON_STATUS_PENDING" description="VMPAYMENT_PLATRON_STATUS_PENDING_DESC" />
+	<param name="status_success" type="vmorderstate" scope="com_virtuemart" default="C" label="VMPAYMENT_PLATRON_STATUS_SUCCESS" description="VMPAYMENT_PLATRON_STATUS_SUCCESS_DESC" />
+	<param name="status_canceled" type="vmorderstate" scope="com_virtuemart" default="X" label="VMPAYMENT_PLATRON_STATUS_FAILED" description="VMPAYMENT_PLATRON_STATUS_FAILED_DESC" />
+    </params>
+</install>
