@@ -10,11 +10,11 @@ class plgVmPaymentPlatron extends vmPSPlugin
 {
     // instance of class
     public static $_this = false;
-    
+
     function __construct(&$subject, $config)
     {
         parent::__construct($subject, $config);
-        
+
         $this->_loggable   = true;
         $this->tableFields = array_keys($this->getTableSQLFields());
         $varsToPush        = array(
@@ -52,16 +52,16 @@ class plgVmPaymentPlatron extends vmPSPlugin
                 'char'
             )
         );
-        
+
         $this->setConfigParameterable($this->_configTableFieldName, $varsToPush);
     }
-    
-    
+
+
     protected function getVmPluginCreateTableSQL()
     {
         return $this->createTableSQL('Payment Walletone Table');
     }
-    
+
     function getTableSQLFields()
     {
         $SQLfields = array(
@@ -76,14 +76,14 @@ class plgVmPaymentPlatron extends vmPSPlugin
             'cost_percent_total' => ' decimal(10,2) DEFAULT NULL ',
             'tax_id' => 'smallint(11) DEFAULT NULL'
         );
-        
+
         return $SQLfields;
     }
-    
+
     function plgVmConfirmedOrder($cart, $order) // главный метод - построение формы
     {
 		include("PG_Signature.php");
-		
+
         if (!($method = $this->getVmPluginMethod($order['details']['BT']->virtuemart_paymentmethod_id))) {
             return null; // Another method was selected, do nothing
         }
@@ -105,7 +105,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 
 		$check_url = JURI::root() . "index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&pelement=platron&format=raw&type=check&order_id=".$order['details']['BT']->virtuemart_order_id;
         $result_url = JURI::root() . "index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&pelement=platron&format=raw&type=result&order_id=".$order['details']['BT']->virtuemart_order_id;
-		
+
 		$arrReq = array();
 		/* Обязательные параметры */
 		$arrReq['pg_merchant_id'] = $method->platron_id;// Идентификатор магазина
@@ -121,54 +121,54 @@ class plgVmPaymentPlatron extends vmPSPlugin
 
 		if(isset($order->phone_1)){ // Телефон в 11 значном формате
 			$strUserPhone = preg_replace('/\D+/','',$order['details']['BT']->phone_1);
-			if(strlen($strUserPhone) == 10)			
+			if(strlen($strUserPhone) == 10)
 				$strUserPhone .= "7";
 			$arrReq['pg_user_phone'] = $strUserPhone;
 			if(strlen($strUserPhone) < 10)
 				unset($arrReq['pg_user_phone']);
 		}
-		
+
 		if(isset($order->email)){
 			$arrReq['pg_user_contact_email'] = $order['details']['BT']->email;
 			$arrReq['pg_user_email'] = $order['details']['BT']->email; // Для ПС Деньги@Mail.ru
 		}
 
 		$jmlThisDocument = & JFactory::getDocument();
-		switch ($jmlThisDocument->language) 
+		switch ($jmlThisDocument->language)
         {
             case 'en-gb': $language = 'EN'; break;
             case 'ru-ru': $language = 'RU'; break;
             default: $language = 'EN'; break;
         }
-		
+
 		$testing_mode = 0;
 		if($method->testing_mode == "TEST")
 			$testing_mode = 1;
-		
+
 		$arrReq['pg_language'] = $language;
 		$arrReq['pg_testing_mode'] = $testing_mode;
-		
+
 		if($currency_code_3 == "RUR")
 			$arrReq['pg_currency'] = "RUB";
 		else
 			$arrReq['pg_currency'] = $currency_code_3;
-		
+
 		$arrReq['pg_salt'] = rand(21,43433);
 		$arrReq['pg_sig'] = PG_Signature::make('payment.php', $arrReq, $method->platron_secret);
 		$query = http_build_query($arrReq);
 //		var_dump($arrReq);
 //		die();
-		header("Location: https://paybox.kz/payment.php?$query");
-		
+		header("Location: https://api.paybox.money/payment.php?$query");
+
         return $this->processConfirmedOrderPaymentResponse(true, $cart, $order, $html, $this->renderPluginName($method, $order), 'P');
     }
-    
+
     function plgVmOnShowOrderBEPayment($virtuemart_order_id, $virtuemart_payment_id)
     {
         if (!$this->selectedThisByMethodId($virtuemart_payment_id)) {
             return null; // Another method was selected, do nothing
         }
-        
+
         $db = JFactory::getDBO();
         $q  = 'SELECT * FROM `' . $this->_tablename . '` ' . 'WHERE `virtuemart_order_id` = ' . $virtuemart_order_id;
         $db->setQuery($q);
@@ -177,7 +177,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
             return '';
         }
         $this->getPaymentCurrency($paymentTable);
-        
+
         $html = '<table class="adminlist">' . "\n";
         $html .= $this->getHtmlHeaderBE();
         $html .= $this->getHtmlRowBE('STANDARD_PAYMENT_NAME', $paymentTable->payment_name);
@@ -185,7 +185,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
         $html .= '</table>' . "\n";
         return $html;
     }
-    
+
     function getCosts(VirtueMartCart $cart, $method, $cart_prices)
     {
         if (preg_match('/%$/', $method->cost_percent_total)) {
@@ -195,32 +195,32 @@ class plgVmPaymentPlatron extends vmPSPlugin
         }
         return ($method->cost_per_transaction + ($cart_prices['salesPrice'] * $cost_percent_total * 0.01));
     }
-    
+
     protected function checkConditions($cart, $method, $cart_prices)
     {
         return true;
     }
-    
+
     function plgVmOnStoreInstallPaymentPluginTable($jplugin_id)
     {
         return $this->onStoreInstallPluginTable($jplugin_id);
     }
-    
+
     public function plgVmOnSelectCheckPayment(VirtueMartCart $cart)
     {
         return $this->OnSelectCheck($cart);
     }
-    
+
     public function plgVmDisplayListFEPayment(VirtueMartCart $cart, $selected = 0, &$htmlIn)
     {
         return $this->displayListFE($cart, $selected, $htmlIn);
     }
-    
+
     public function plgVmonSelectedCalculatePricePayment(VirtueMartCart $cart, array &$cart_prices, &$cart_prices_name)
     {
         return $this->onSelectedCalculatePrice($cart, $cart_prices, $cart_prices_name);
     }
-    
+
     function plgVmgetPaymentCurrency($virtuemart_paymentmethod_id, &$paymentCurrencyId)
     {
         if (!($method = $this->getVmPluginMethod($virtuemart_paymentmethod_id))) {
@@ -230,39 +230,39 @@ class plgVmPaymentPlatron extends vmPSPlugin
             return false;
         }
         $this->getPaymentCurrency($method);
-        
+
         $paymentCurrencyId = $method->payment_currency;
     }
-    
+
     function plgVmOnCheckAutomaticSelectedPayment(VirtueMartCart $cart, array $cart_prices = array())
     {
         return $this->onCheckAutomaticSelected($cart, $cart_prices);
     }
-    
+
     public function plgVmOnShowOrderFEPayment($virtuemart_order_id, $virtuemart_paymentmethod_id, &$payment_name)
     {
         $this->onShowOrderFE($virtuemart_order_id, $virtuemart_paymentmethod_id, $payment_name);
     }
-    
+
     function plgVmonShowOrderPrintPayment($order_number, $method_id)
     {
         return $this->onShowOrderPrint($order_number, $method_id);
     }
-    
+
     function plgVmDeclarePluginParamsPayment($name, $id, &$data)
     {
         return $this->declarePluginParams('payment', $name, $id, $data);
     }
-    
+
     function plgVmSetOnTablePluginParamsPayment($name, $id, &$table)
     {
         return $this->setOnTablePluginParams($name, $id, $table);
     }
-    
+
     protected function displayLogos($logo_list)
     {
         $img = "";
-        
+
         if (!(empty($logo_list))) {
             $url = JURI::root() . str_replace(JPATH_ROOT, '', dirname(__FILE__)) . '/';
             if (!is_array($logo_list))
@@ -274,18 +274,18 @@ class plgVmPaymentPlatron extends vmPSPlugin
         }
         return $img;
     }
-    
+
     public function plgVmOnPaymentNotification()
     {
 		include("PG_Signature.php");
 		unset($_GET['Itemid']);
-		
+
         if (JRequest::getVar('pelement') != 'platron') {
             return null;
         }
 		if (!class_exists('VirtueMartModelOrders'))
             require(JPATH_VM_ADMINISTRATOR . DS . 'models' . DS . 'orders.php');
-		
+
 		$orderid      = JRequest::getInt('order_id', 0);
 		$strTypeRequest = JRequest::getVar('type');
         $order_model  = new VirtueMartModelOrders();
@@ -297,7 +297,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 			case 'check':
 				$arrParams = $_GET;
 				$thisScriptName = PG_Signature::getOurScriptName();
-	
+
 				if ( !PG_Signature::check($arrParams['pg_sig'], $thisScriptName, $arrParams, $method->platron_secret) )
 					die("Bad signature");
 
@@ -324,8 +324,8 @@ class plgVmPaymentPlatron extends vmPSPlugin
 				echo $xml->asXML();
 				die();
 				break;
-				
-				
+
+
 				case 'result':
 					$arrParams = $_GET;
 					$thisScriptName = PG_Signature::getOurScriptName();
@@ -339,7 +339,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 
 					if ( $arrParams['pg_result'] == 1 ) {
 						if($method->status_pending == $order_info['details']['BT']->order_status){
-	
+
 							$order['order_status']        = $method->status_success;
 							$order['virtuemart_order_id'] = $orderid;
 							$order['customer_notified']   = 1;
@@ -374,18 +374,18 @@ class plgVmPaymentPlatron extends vmPSPlugin
 					print $xml->asXML();
 					die();
 					break;
-			
-					
+
+
 			default:
 				break;
 		}
     }
-    
+
     function plgVmOnPaymentResponseReceived(&$html)
     {
         return true;
     }
-    
+
     function plgVmOnUserPaymentCancel()
     {
         return false;
@@ -398,21 +398,21 @@ class plgVmPaymentPlatron extends vmPSPlugin
         $lang->load($filename, JPATH_ADMINISTRATOR);
         if (!class_exists('VirtueMartControllerVirtuemart'))
             require(JPATH_VM_SITE . DS . 'controllers' . DS . 'virtuemart.php');
-        
+
         if (!class_exists('shopFunctionsF'))
             require(JPATH_VM_SITE . DS . 'helpers' . DS . 'shopfunctionsf.php');
         $controller = new VirtueMartControllerVirtuemart();
         $controller->addViewPath(JPATH_VM_ADMINISTRATOR . DS . 'views');
-        
+
         $view = $controller->getView('orders', 'html');
         if (!$controllerName)
             $controllerName = 'orders';
         $controllerClassName = 'VirtueMartController' . ucfirst($controllerName);
         if (!class_exists($controllerClassName))
             require(JPATH_VM_SITE . DS . 'controllers' . DS . $controllerName . '.php');
-        
+
         $view->addTemplatePath(JPATH_COMPONENT_ADMINISTRATOR . '/views/orders/tmpl');
-        
+
         $db = JFactory::getDBO();
         $q  = "SELECT CONCAT_WS(' ',first_name, middle_name , last_name) AS full_name, email, order_status_name
 			FROM #__virtuemart_order_userinfos
@@ -439,20 +439,20 @@ class plgVmPaymentPlatron extends vmPSPlugin
         $view->renderMailLayout($vendor, $recipient);
         $body = ob_get_contents();
         ob_end_clean();
-        
+
         $subject = (isset($view->subject)) ? $view->subject : JText::_('COM_VIRTUEMART_DEFAULT_MESSAGE_SUBJECT');
         $mailer  = JFactory::getMailer();
         $mailer->addRecipient($recipient);
         $mailer->setSubject($subject);
         $mailer->isHTML(VmConfig::get('order_mail_html', true));
         $mailer->setBody($body);
-        
+
         if (!$vendor) {
             $replyto[0] = $view->vendorEmail;
             $replyto[1] = $view->vendor->vendor_name;
             $mailer->addReplyTo($replyto);
         }
-        
+
         if (isset($view->mediaToSend)) {
             foreach ((array) $view->mediaToSend as $media) {
                 $mailer->addAttachment($media);
@@ -460,5 +460,5 @@ class plgVmPaymentPlatron extends vmPSPlugin
         }
         return $mailer->Send();
     }
-    
+
 }
