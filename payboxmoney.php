@@ -6,7 +6,7 @@ if (!defined('_VALID_MOS') && !defined('_JEXEC'))
 if (!class_exists('vmPSPlugin'))
     require(JPATH_VM_PLUGINS . DS . 'vmpsplugin.php');
 
-class plgVmPaymentPlatron extends vmPSPlugin
+class plgVmPaymentPayboxmoney extends vmPSPlugin
 {
     // instance of class
     public static $_this = false;
@@ -27,15 +27,15 @@ class plgVmPaymentPlatron extends vmPSPlugin
                 'char'
             ),
             'payment_order_total' => 'decimal(15,5) NOT NULL DEFAULT \'0.00000\' ',
-            'platron_id' => array(
+            'payboxmoney_id' => array(
                 '',
                 'int'
             ),
-            'platron_secret' => array(
+            'payboxmoney_secret' => array(
                 '',
                 'string'
             ),
-			'platron_life_time' => array(
+			'payboxmoney_life_time' => array(
 				'',
 				'int'
 			),
@@ -103,18 +103,18 @@ class plgVmPaymentPlatron extends vmPSPlugin
         $db->setQuery($q);
         $currency_code_3 = $db->loadResult();
 
-		$check_url = JURI::root() . "index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&pelement=platron&format=raw&type=check&order_id=".$order['details']['BT']->virtuemart_order_id;
-        $result_url = JURI::root() . "index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&pelement=platron&format=raw&type=result&order_id=".$order['details']['BT']->virtuemart_order_id;
+		$check_url = JURI::root() . "index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&pelement=payboxmoney&format=raw&type=check&order_id=".$order['details']['BT']->virtuemart_order_id;
+        $result_url = JURI::root() . "index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&pelement=payboxmoney&format=raw&type=result&order_id=".$order['details']['BT']->virtuemart_order_id;
 
 		$arrReq = array();
 		/* Обязательные параметры */
-		$arrReq['pg_merchant_id'] = $method->platron_id;// Идентификатор магазина
+		$arrReq['pg_merchant_id'] = $method->payboxmoney_id;// Идентификатор магазина
 		$arrReq['pg_order_id']    = $order['details']['BT']->order_number;		// Идентификатор заказа в системе магазина
 		$arrReq['pg_amount']      = sprintf("%01.2f",$order['details']['BT']->order_total);		// Сумма заказа
 		$arrReq['pg_description'] = "Оплата заказа ".$_SERVER['HTTP_HOST']; // Описание заказа (показывается в Платёжной системе)
 		$arrReq['pg_user_ip'] = $_SERVER['REMOTE_ADDR']; // Описание заказа (показывается в Платёжной системе)
 		$arrReq['pg_site_url'] = $_SERVER['HTTP_HOST']; // Для возврата на сайт
-		$arrReq['pg_lifetime'] = $method->platron_life_time; // Время жизни в секундах
+		$arrReq['pg_lifetime'] = $method->payboxmoney_life_time; // Время жизни в секундах
 		$arrReq['pg_user_ip'] = $_SERVER['REMOTE_ADDR'];
 		$arrReq['pg_check_url'] = $check_url; // Проверка заказа
 		$arrReq['pg_result_url'] = $result_url; // Оповещение о результатах
@@ -154,7 +154,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 			$arrReq['pg_currency'] = $currency_code_3;
 
 		$arrReq['pg_salt'] = rand(21,43433);
-		$arrReq['pg_sig'] = PG_Signature::make('payment.php', $arrReq, $method->platron_secret);
+		$arrReq['pg_sig'] = PG_Signature::make('payment.php', $arrReq, $method->payboxmoney_secret);
 		$query = http_build_query($arrReq);
 //		var_dump($arrReq);
 //		die();
@@ -254,6 +254,11 @@ class plgVmPaymentPlatron extends vmPSPlugin
         return $this->declarePluginParams('payment', $name, $id, $data);
     }
 
+    function plgVmDeclarePluginParamsPaymentVM3(&$data)
+    {
+        return $this->declarePluginParams('payment', $data);
+    }
+
     function plgVmSetOnTablePluginParamsPayment($name, $id, &$table)
     {
         return $this->setOnTablePluginParams($name, $id, $table);
@@ -280,7 +285,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 		include("PG_Signature.php");
 		unset($_GET['Itemid']);
 
-        if (JRequest::getVar('pelement') != 'platron') {
+        if (JRequest::getVar('pelement') != 'payboxmoney') {
             return null;
         }
 		if (!class_exists('VirtueMartModelOrders'))
@@ -297,8 +302,9 @@ class plgVmPaymentPlatron extends vmPSPlugin
 			case 'check':
 				$arrParams = $_GET;
 				$thisScriptName = PG_Signature::getOurScriptName();
+                $arrParams['pg_sig'] = PG_Signature::make($thisScriptName, $arrParams, $method->payboxmoney_secret);
 
-				if ( !PG_Signature::check($arrParams['pg_sig'], $thisScriptName, $arrParams, $method->platron_secret) )
+				if ( !PG_Signature::check($arrParams['pg_sig'], $thisScriptName, $arrParams, $method->payboxmoney_secret) )
 					die("Bad signature");
 
 				/*
@@ -314,7 +320,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 				$arrResp['pg_salt']              = $arrParams['pg_salt']; // в ответе необходимо указывать тот же pg_salt, что и в запросе
 				$arrResp['pg_status']            = $is_order_available ? 'ok' : 'error';
 				$arrResp['pg_error_description'] = $is_order_available ?  ""  : $error_desc;
-				$arrResp['pg_sig'] = PG_Signature::make($thisScriptName, $arrResp, $method->platron_secret);
+				$arrResp['pg_sig'] = PG_Signature::make($thisScriptName, $arrResp, $method->payboxmoney_secret);
 
 				$xml = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><response/>');
 				$xml->addChild('pg_salt', $arrResp['pg_salt']); // в ответе необходимо указывать тот же pg_salt, что и в запросе
@@ -329,7 +335,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 				case 'result':
 					$arrParams = $_GET;
 					$thisScriptName = PG_Signature::getOurScriptName();
-//					if ( !PG_Signature::check($arrParams['pg_sig'], $thisScriptName, $arrParams, $method->platron_secret) )
+//					if ( !PG_Signature::check($arrParams['pg_sig'], $thisScriptName, $arrParams, $method->payboxmoney_secret) )
 //						die("Bad signature");
 
 					$xml = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><response/>');
@@ -343,7 +349,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 							$order['order_status']        = $method->status_success;
 							$order['virtuemart_order_id'] = $orderid;
 							$order['customer_notified']   = 1;
-							$order['comments'] = JTExt::sprintf('VMPAYMENT_PLATRON_PAYMENT_CONFIRMED', $order_number);
+							$order['comments'] = JTExt::sprintf('VMPAYMENT_PAYBOXMONEY_PAYMENT_CONFIRMED', $order_number);
 							ob_start();
 							$modelOrder->updateStatusForOneOrder($orderid, $order, true);
 							ob_end_clean();
@@ -361,7 +367,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 							$order['order_status']        = $method->status_canceled;
 							$order['virtuemart_order_id'] = $orderid;
 							$order['customer_notified']   = 1;
-							$order['comments'] = JTExt::sprintf('VMPAYMENT_PLATRON_PAYMENT_FAILED', $order_number);
+							$order['comments'] = JTExt::sprintf('VMPAYMENT_PAYBOXMONEY_PAYMENT_FAILED', $order_number);
 							ob_start();
 							$modelOrder->updateStatusForOneOrder($orderid, $order, true);
 							ob_end_clean();
@@ -370,7 +376,7 @@ class plgVmPaymentPlatron extends vmPSPlugin
 					$xml->addChild('pg_salt', $arrParams['pg_salt']); // в ответе необходимо указывать тот же pg_salt, что и в запросе
 					$xml->addChild('pg_status', $js_result_status);
 					$xml->addChild('pg_description', $pg_description);
-					$xml->addChild('pg_sig', PG_Signature::makeXML($thisScriptName, $xml, $method->platron_secret));
+					$xml->addChild('pg_sig', PG_Signature::makeXML($thisScriptName, $xml, $method->payboxmoney_secret));
 					print $xml->asXML();
 					die();
 					break;
