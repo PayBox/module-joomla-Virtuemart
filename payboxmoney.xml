@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension version="1.5" type="plugin" group="vmpayment" >
+    <name>VM - Payment, Paybox.money</name>
+    <creationDate>Dec 2019</creationDate>
+    <author>Lashnev Alexey</author>
+    <authorUrl>http://hh.ru/resume/453b4e87ff00d65a230039ed1f773455363048</authorUrl>
+    <copyright></copyright>
+    <license></license>
+    <version>3.6.10</version>
+    <description><![CDATA[Paybox - универсальная система приема платежей на сайте. Система электронных платежей для интернет магазинов]]></description>
+    <languages>
+	<language tag="en-GB">en-GB.plg_vmpayment_payboxmoney.ini</language>
+	<language tag="ru-RU">ru-RU.plg_vmpayment_payboxmoney.ini</language>
+    </languages>
+    <files>
+	<filename plugin="payboxmoney">payboxmoney.php</filename>
+	<filename>index.html</filename>
+	<filename>paybox.gif</filename>
+	<filename>PG_Signature.php</filename>
+    </files>
+	<vmconfig>
+		<fields name="params">
+    <fieldset name="basic" addpath="/administrator/components/com_virtuemart/fields">
+<!--	<field type="vmjpluginwarning" />-->
+	<field	name="payment_logos" type="vmfiles" label="VMPAYMENT_STANDARD_LOGOS" description="VMPAYMENT_STANDARD_LOGOS_DESC"	directory="/plugins/vmpayment/payboxmoney" default="paybox.gif" hide_default="1" hide_none="1" stripext="0"   exclude=".*\.(php|html|xml|wsdl)" />
+	<field name="testing_mode" type="radio" default="TEST" label="VMPAYMENT_PAYBOXMONEY_TESTING_MODE" description="VMPAYMENT_PAYBOXMONEY_TESTING_MODE_DESC">
+	    <option value="TEST">VMPAYMENT_PAYBOXMONEY_TEST</option>
+	    <option value="PRODUCTION">VMPAYMENT_PAYBOXMONEY_PRODUCTION</option>
+	</field>
+	<field type="text" name="payboxmoney_id"  size="50" label="VMPAYMENT_PAYBOXMONEY_ID" default="" description="VMPAYMENT_PAYBOXMONEY_ID_DESC" />
+    <field type="text" name="payboxmoney_secret"  size="50" label="VMPAYMENT_PAYBOXMONEY_SECRET" default="" description="VMPAYMENT_PAYBOXMONEY_SECRET_DESC" />
+	<field type="text" name="payboxmoney_life_time"  size="50" label="VMPAYMENT_PAYBOXMONEY_LIFE_TIME" default="24" description="VMPAYMENT_PAYBOXMONEY_LIFE_TIME_DESC" />
+	<field name="status_pending" type="vmorderstate" scope="com_virtuemart" default="P" label="VMPAYMENT_PAYBOXMONEY_STATUS_PENDING" description="VMPAYMENT_PAYBOXMONEY_STATUS_PENDING_DESC" />
+	<field name="status_success" type="vmorderstate" scope="com_virtuemart" default="C" label="VMPAYMENT_PAYBOXMONEY_STATUS_SUCCESS" description="VMPAYMENT_PAYBOXMONEY_STATUS_SUCCESS_DESC" />
+	<field name="status_canceled" type="vmorderstate" scope="com_virtuemart" default="X" label="VMPAYMENT_PAYBOXMONEY_STATUS_FAILED" description="VMPAYMENT_PAYBOXMONEY_STATUS_FAILED_DESC" />
+    </fieldset>
+		</fields>
+	</vmconfig>
+</extension>
