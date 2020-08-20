@@ -118,6 +118,7 @@ class plgVmPaymentPayboxmoney extends vmPSPlugin
 		$arrReq['pg_user_ip'] = $_SERVER['REMOTE_ADDR'];
 		$arrReq['pg_check_url'] = $check_url; // Проверка заказа
 		$arrReq['pg_result_url'] = $result_url; // Оповещение о результатах
+		$arrReq['pg_request_method'] = 'GET'; // Метод ответа для корректного получения результата платежа
 
 		if(isset($order->phone_1)){ // Телефон в 11 значном формате
 			$strUserPhone = preg_replace('/\D+/','',$order['details']['BT']->phone_1);
