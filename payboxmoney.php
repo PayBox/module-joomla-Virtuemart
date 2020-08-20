@@ -118,7 +118,7 @@ class plgVmPaymentPayboxmoney extends vmPSPlugin
 		$arrReq['pg_user_ip'] = $_SERVER['REMOTE_ADDR'];
 		$arrReq['pg_check_url'] = $check_url; // Проверка заказа
 		$arrReq['pg_result_url'] = $result_url; // Оповещение о результатах
-		$arrReq['pg_request_method'] = 'GET'; // Метод ответа для корректного получения результата платежа
+		$arrReq['pg_request_method'] = 'POST'; // Метод ответа для корректного получения результата платежа
 
 		if(isset($order->phone_1)){ // Телефон в 11 значном формате
 			$strUserPhone = preg_replace('/\D+/','',$order['details']['BT']->phone_1);
@@ -301,7 +301,7 @@ class plgVmPaymentPayboxmoney extends vmPSPlugin
 
 		switch ($strTypeRequest) {
 			case 'check':
-				$arrParams = $_GET;
+				$arrParams = $_POST;
 				$thisScriptName = PG_Signature::getOurScriptName();
                 $arrParams['pg_sig'] = PG_Signature::make($thisScriptName, $arrParams, $method->payboxmoney_secret);
 
@@ -334,7 +334,7 @@ class plgVmPaymentPayboxmoney extends vmPSPlugin
 
 
 				case 'result':
-					$arrParams = $_GET;
+					$arrParams = $_POST;
 					$thisScriptName = PG_Signature::getOurScriptName();
 //					if ( !PG_Signature::check($arrParams['pg_sig'], $thisScriptName, $arrParams, $method->payboxmoney_secret) )
 //						die("Bad signature");
